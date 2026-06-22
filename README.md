@@ -1,113 +1,113 @@
 # e-Driver License Reader (Macnatic Tape Swipe Reader)
 
-แอปพลิเคชัน Android สำหรับอ่านข้อมูลจากแถบแม่เหล็ก (Magnetic Stripe Reader - MSR) บนใบอนุญาตขับขี่ของประเทศไทย (Thai Driving License) และนำมาแสดงผลอย่างถูกต้องตามมาตรฐานข้อมูลใบอนุญาตขับขี่ พัฒนาด้วย **Kotlin** และ **Jetpack Compose** สำหรับการออกแบบอินเตอร์เฟสสมัยใหม่
+An Android application designed to read and parse data from the magnetic stripe (MSR) on a Thai Driving License. Built using **Kotlin** and **Jetpack Compose** for a modern, responsive user interface.
 
 ---
 
-## 🚀 คุณสมบัติเด่น (Features)
+## 🚀 Features
 
-1. **รองรับอุปกรณ์อ่านแถบแม่เหล็ก 2 ระบบ (Dual MSR Support)**
-   - **อุปกรณ์ Sunmi (Built-in MSR):** เชื่อมต่อโดยตรงกับ Sunmi PaySDK Service (`SunmiPaySdkManager`) เพื่อดึงข้อมูลบัตรจากแถบแม่เหล็กในตัวเครื่อง POS (เช่น Sunmi V2 Pro, T2 เป็นต้น)
-   - **หัวอ่านภายนอกแบบ USB (External USB MSR):** ดักจับข้อมูลอินพุตคีย์บอร์ดแบบ HID (Human Interface Device) ผ่าน `dispatchKeyEvent` รองรับหัวอ่าน USB MSR ทั่วไป (เช่น MSR90, MagTek) ทันทีที่เชื่อมต่อ (Plug-and-Play)
+1. **Dual MSR Support**
+   - **Sunmi POS Terminals (Built-in MSR):** Binds directly to the Sunmi PaySDK Service (`SunmiPaySdkManager`) to capture track data from the terminal's built-in magnetic card slot (e.g., Sunmi V2 Pro, T2, etc.).
+   - **External USB Readers (USB HID MSR):** Intercepts keyboard emulation inputs via `dispatchKeyEvent` for generic USB MSR readers (e.g., MSR90, MagTek) instantly upon connection (Plug-and-Play).
 
-2. **ระบบถอดรหัสข้อมูลใบขับขี่ไทย (Thai Driving License Parsing)**
-   - สแกนข้อมูลดิบจากแถบแม่เหล็กทั้ง **Track 1** และ **Track 2** (รวมถึง **Track 3** หากมี)
-   - สกัดข้อมูลออกมาเป็นฟิลด์หลักโดยอัตโนมัติ:
-     - **Citizen ID** (เลขประจำตัวประชาชน 13 หลัก)
-     - **License Number** (เลขที่ใบขับขี่)
-     - **Name** (ชื่อ-นามสกุล ภาษาอังกฤษ)
-     - **Date of Birth** (วัน/เดือน/ปี เกิด)
-     - **Expiration Date** (วันหมดอายุของบัตร)
-     - **License Type** (ประเภทของใบอนุญาตขับขี่ เช่น รถยนต์ส่วนบุคคล หรือรถจักรยานยนต์ส่วนบุคคล)
+2. **Thai Driving License Parsing**
+   - Scans raw Track 1, Track 2, and Track 3 data.
+   - Automatically extracts critical metadata:
+     - **Citizen ID** (13-digit National ID)
+     - **License Number**
+     - **First Name & Last Name** (English)
+     - **Date of Birth**
+     - **Expiration Date**
+     - **License Type** (e.g., Personal Car or Personal Motorcycle)
 
-3. **รองรับการแสดงผลรูปถ่ายจากไฟล์ JPEG 2000 (JP2)**
-   - สามารถโหลดและถอดรหัสไฟล์รูปภาพนามสกุล `.jp2` (JPEG 2000) ของเจ้าของบัตรตามรหัส Citizen ID (เช่น `1234567890123.jp2`) เพื่อนำมาแสดงในหน้าโปรไฟล์
+3. **JPEG 2000 (JP2) Photo Support**
+   - Locates and decodes holder photos in `.jp2` (JPEG 2000) format matching the Citizen ID (e.g., `1234567890123.jp2`) to display on the result screen.
 
-4. **Floating Log Overlay (ตัวแสดงบันทึกบันทึกหน้าจอ)**
-   - มีปุ่ม Overlay ลอยแสดงผลการทำงานและข้อผิดพลาด (Logs) บนหน้าจอของอุปกรณ์แบบ Real-time เพื่อช่วยในการตรวจสอบแก้ไขปัญหาหน้างาน (Debugging) ได้อย่างสะดวกรวดเร็ว
+4. **Floating Log Overlay**
+   - Incorporates a floating debug button that overlays real-time system logs over the UI for easy on-device debugging and tracking of swipe events.
 
 ---
 
-## 📊 แผนผังการทำงาน (System Flow Diagram)
+## 📊 System Flow Diagram
 
-แอปพลิเคชันมีขั้นตอนการดักจับข้อมูลจากแถบแม่เหล็ก คัดแยกประมวลผล ไปจนถึงการถอดรหัสภาพและแสดงผลลัพธ์ ดังแผนภาพด้านล่างนี้:
+The application processes input from MSR swipes, runs parsing logic, decodes target images, and displays results as outlined below:
 
 ```text
-[ เริ่มต้นแอปพลิเคชัน ]
+[ App Launch ]
         │
         ├──────────────────────────────┐
         ▼                              ▼
-(สแกนผ่านหัวอ่าน USB MSR)      (รูดผ่านตัวเครื่อง Sunmi)
-  - ดักจับคีย์บอร์ดอินพุต          - ผูกระบบ Sunmi PaySDK
-  - ทำการเก็บ Buffer จนพบ ENTER    - เปิดบริการ MSR Polling
+(USB HID MSR Swipe)           (Sunmi Terminal MSR)
+  - Capture keyboard events     - Bind to Sunmi PaySDK
+  - Buffer characters to ENTER  - Start checkCard MSR polling
         │                              │
         └──────────────┬───────────────┘
-                       │ (ได้ข้อมูลดิบ Track 1, 2, 3)
+                       │ (Raw Track 1, 2, 3 data)
                        ▼
-         [ ประมวลผลข้อมูลแถบแม่เหล็ก ]
-         - ส่งต่อให้ ThaiDrivingLicenseParser.parse
-         - สกัดข้อมูล: Citizen ID, ชื่อ-นามสกุล, วันเกิด, วันหมดอายุ
+            [ Parse Track Data ]
+            - Call ThaiDrivingLicenseParser.parse
+            - Extract: Citizen ID, Names, DOB, Expiry
                        │
                        ▼
-           [ โหลดรูปถ่ายผู้ถือบัตร ]
-         - ค้นหาไฟล์ {citizen_id}.jp2 จากความสำคัญโฟลเดอร์
-         - หากพบ: ถอดรหัส JP2 -> Bitmap
-         - หากไม่พบ: ใช้ไอคอน Profile Placeholder จำลอง
+          [ Retrieve & Load Photo ]
+            - Search for {citizen_id}.jp2 in storage
+            - If found: Decode JP2 to Bitmap
+            - If not found: Use default avatar icon
                        │
                        ▼
-         [ แสดงหน้าโหลด Loading (1.2s) ]
+          [ Display Loading Screen (1.2s) ]
                        │
                        ▼
-         [ แสดงผลลัพธ์หน้าจอ ResultScreen ]
-         - แสดงข้อมูลกึ่งกลางสมมาตรพร้อม Watermark
-         - มีปุ่มขยายดูข้อมูลแทร็กดิบ (Raw Track Data)
+          [ Display ResultScreen ]
+            - Centered key-value columns with watermark
+            - Toggle layout to view raw track logs
                        │
                        ▼
-         [ กลับสู่หน้าหลัก / เคลียร์สถานะ ]
-         - ผู้ใช้กดย้อนกลับ (Toolbar) หรือกด "กลับไปหน้าเริ่ม"
-         - เคลียร์ข้อมูลทั้งหมดในระบบให้เป็นค่าว่าง
+            [ Back Button / Reset State ]
+            - Press back arrow or bottom Back button
+            - Clear licenseData to reset state to scan screen
 ```
 
 ---
 
-## 📂 โครงสร้างโฟลเดอร์และโค้ดสำคัญ (Project Structure)
+## 📂 Project Structure
 
 ```text
 app/src/main/java/com/example/macnatic_tape_swipe_reader/
 ├── features/
-│   ├── monitor_logging/             # จัดการ Floating Log Overlay
+│   ├── monitor_logging/             # Floating log overlay utility
 │   └── msr/
 │       ├── models/
-│       │   └── ThaiDrivingLicense.kt# โมเดลข้อมูลใบขับขี่
+│       │   └── ThaiDrivingLicense.kt# License data model
 │       └── parsers/
-│           └── ThaiDrivingLicenseParser.kt # คลาสลอจิกวิเคราะห์และสกัดข้อมูลจาก Track 1, 2, 3
+│           └── ThaiDrivingLicenseParser.kt # Parser logic for Track 1, 2, 3
 ├── services/
-│   └── SunmiPaySdkManager.kt        # ตัวเชื่อมต่อ SDK บริการอ่านแถบแม่เหล็กของ Sunmi
+│   └── SunmiPaySdkManager.kt        # Sunmi PaySDK service wrapper
 └── view/
-    ├── components/                  # คอมโพเนนต์ UI ย่อย
-    ├── MainActivity.kt              # Entrypoint จัดการคีย์บอร์ดอีเวนต์และ USB Connection
-    ├── MsrScannerScreen.kt          # หน้าจอเตรียมพร้อมสำหรับการรูดบัตร
-    ├── ResultScreen.kt              # หน้าจอแสดงผลลัพธ์ข้อมูลที่รูดได้
-    └── FormScreen.kt                # หน้าจอกรอกข้อมูลแบบปกติ (Manual Override)
+    ├── components/                  # Composable UI sub-components
+    ├── MainActivity.kt              # App entrypoint (USB detection & keyboard dispatch)
+    ├── MsrScannerScreen.kt          # Screen state routing
+    ├── ResultScreen.kt              # Scanned details result page
+    └── FormScreen.kt                # Manual backup input form screen
 ```
 
 ---
 
-## 🛠 ความต้องการระบบและการติดตั้ง (System Requirements)
+## 🛠 System Requirements
 
-- **Android SDK:** ขั้นต่ำ API Level 26 (Android 8.0) ขึ้นไป
-- **อุปกรณ์รันระบบ:**
-  - กรณีใช้หัวอ่านในตัวเครื่อง: ต้องเป็นเครื่อง **Sunmi terminal** ที่มีช่องสแกนบัตรแถบแม่เหล็ก และติดตั้งตัวบริการระบบ `com.sunmi.pay.hardware_v3`
-  - กรณีใช้หัวอ่าน USB ทั่วไป: อุปกรณ์ Android ใดๆ ที่รองรับ **USB OTG**
+- **Android SDK:** Minimum API Level 26 (Android 8.0) or higher.
+- **Hardware Support:**
+  - For built-in reader: A Sunmi terminal containing a magnetic card slot and the `com.sunmi.pay.hardware_v3` system package installed.
+  - For external reader: Any Android device supporting USB OTG with a connected USB MSR reader.
 
 ---
 
-## 📷 การตั้งค่าไฟล์รูปภาพ JP2 (JP2 Photo Setup)
+## 📷 JP2 Photo Setup
 
-แอปพลิเคชันจะค้นหาไฟล์รูปภาพเจ้าของบัตรจากเลขบัตรประชาชน 13 หลัก (Citizen ID) ในโฟลเดอร์ต่อไปนี้บนอุปกรณ์:
+The app searches for holder photos matching the 13-digit Citizen ID (e.g., `1234567890123.jp2`) in the following locations on the device:
 
 1. **App external storage:** `/sdcard/Android/data/com.example.macnatic_tape_swipe_reader/files/{citizen_id}.jp2`
-2. **Public Download directory:** `/sdcard/Download/{citizen_id}.jp2`
-3. **App Assets folder:** โฟลเดอร์ `assets` ภายในโค้ดโปรเจค
+2. **Public Download folder:** `/sdcard/Download/{citizen_id}.jp2`
+3. **App assets directory:** Inside the `assets/` folder in the project source.
 
-*หมายเหตุ: หากไม่พบระบบจะใช้รูปภาพอวาตาร์จำลองแทน*
+*Note: If no image is found, a default avatar placeholder is displayed instead.*

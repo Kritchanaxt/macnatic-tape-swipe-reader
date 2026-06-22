@@ -52,18 +52,6 @@ fun TechnicalMetadataCard(connectionStatus: String) {
                 label = "Reader Connection",
                 value = connectionStatus
             )
-
-            MetadataRow(
-                icon = Icons.Default.CreditCard,
-                label = "Reader Capability",
-                value = "All Track Manual Swipe"
-            )
-
-            MetadataRow(
-                icon = Icons.Default.FlashOn,
-                label = "Decoder Mode",
-                value = "Keyboard / SDK Bridge"
-            )
         }
     }
 }

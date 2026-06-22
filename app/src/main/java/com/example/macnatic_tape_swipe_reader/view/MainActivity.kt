@@ -207,6 +207,14 @@ class MainActivity : ComponentActivity() {
         runOnUiThread {
             if (SunmiPaySdkManager.isConnected) {
                 connectionStatus = "Sunmi PaySDK Connected (Built-in MSR)"
+            } else if (SunmiPaySdkManager.initStatus != "Idle" && 
+                       SunmiPaySdkManager.initStatus != "Initializing" && 
+                       SunmiPaySdkManager.initStatus != "Connected") {
+                val errorMsg = SunmiPaySdkManager.initError ?: SunmiPaySdkManager.initStatus
+                connectionStatus = "Sunmi PaySDK Error: $errorMsg"
+                if (isUsbConnected) {
+                    connectionStatus += " | USB Reader Connected (Ready)"
+                }
             } else {
                 connectionStatus = if (isUsbConnected) {
                     "USB Reader Connected (Ready)"
