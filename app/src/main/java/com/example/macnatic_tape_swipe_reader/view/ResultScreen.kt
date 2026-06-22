@@ -11,6 +11,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -44,7 +45,6 @@ fun ResultScreen(
 ) {
     val scrollState = rememberScrollState()
     var isRawDataExpanded by remember { mutableStateOf(false) }
-    val clipboardManager = LocalClipboardManager.current
 
     Scaffold(
         topBar = {
@@ -56,231 +56,176 @@ fun ResultScreen(
         },
         containerColor = Color.White
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 24.dp)
-                .verticalScroll(scrollState),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(paddingValues),
+            contentAlignment = Alignment.Center
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Subtitle Header
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
+            // Symmetrical Faint Red Concentric Circle Watermark Stamp (matches passport layout)
+            Box(
+                modifier = Modifier
+                    .size(280.dp)
+                    .border(width = 3.dp, color = Color(0xFFEF4444).copy(alpha = 0.05f), shape = CircleShape)
+                    .padding(8.dp)
+                    .border(width = 1.dp, color = Color(0xFFEF4444).copy(alpha = 0.05f), shape = CircleShape),
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "ตรวจสอบข้อมูลการสแกน",
-                    color = Color(0xFF0F172A),
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "กรุณาตรวจสอบรายละเอียดที่อ่านได้จากแถบแม่เหล็กของบัตร",
-                    color = Color(0xFF475569),
-                    fontSize = 13.sp,
-                    textAlign = TextAlign.Center
+                Icon(
+                    imageVector = Icons.Default.VerifiedUser,
+                    contentDescription = null,
+                    tint = Color(0xFFEF4444).copy(alpha = 0.04f),
+                    modifier = Modifier.size(130.dp)
                 )
             }
 
-            // Profile Avatar Placeholder
-            ProfileAvatarPlaceholder(licenseData?.photo)
+            // Scrollable Content
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp)
+                    .verticalScroll(scrollState),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Spacer(modifier = Modifier.height(16.dp))
 
-            if (licenseData != null) {
-                // Parsed Details Card
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = BorderStroke(1.dp, if (licenseData.isParsedSuccessfully) Color(0xFFE2E8F0) else Color(0xFFEF4444)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                // Profile Avatar / Picture Placeholder (Centered)
+                ProfileAvatarPlaceholder(licenseData?.photo)
+
+                if (licenseData != null) {
+                    // Symmetrical key-value list centered details (symmetrical columns matching image)
                     Column(
-                        modifier = Modifier.padding(18.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "รายละเอียดใบขับขี่",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                color = Color(0xFF0F172A)
-                            )
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.FactCheck,
-                                contentDescription = null,
-                                tint = if (licenseData.isParsedSuccessfully) Color(0xFF059669) else Color(0xFFEF4444),
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-
-                        HorizontalDivider(color = Color(0xFFE2E8F0))
-
-                        DataRow(
+                        CenteredGridRow(
                             label = "Citizen ID",
-                            value = licenseData.citizenId.ifEmpty { "Not Found" },
-                            onCopy = { clipboardManager.setText(AnnotatedString(licenseData.citizenId)) }
+                            value = licenseData.citizenId.ifEmpty { "Not Found" }
                         )
-                        HorizontalDivider(color = Color(0xFFE2E8F0))
-
-                        DataRow(
+                        CenteredGridRow(
+                            label = "First name",
+                            value = licenseData.firstNameEn.ifEmpty { "Not Found" }
+                        )
+                        CenteredGridRow(
+                            label = "Last name",
+                            value = licenseData.lastNameEn.ifEmpty { "Not Found" }
+                        )
+                        CenteredGridRow(
                             label = "License Number",
-                            value = licenseData.licenseNumber.ifEmpty { "Not Found" },
-                            onCopy = { clipboardManager.setText(AnnotatedString(licenseData.licenseNumber)) }
+                            value = licenseData.licenseNumber.ifEmpty { "Not Found" }
                         )
-                        HorizontalDivider(color = Color(0xFFE2E8F0))
-
-                        DataRow(
-                            label = "Driver Name (EN)",
-                            value = licenseData.fullNameEn.ifEmpty { "Not Found" },
-                            onCopy = { clipboardManager.setText(AnnotatedString(licenseData.fullNameEn)) }
-                        )
-                        HorizontalDivider(color = Color(0xFFE2E8F0))
-
-                        DataRow(
+                        CenteredGridRow(
                             label = "Date of Birth",
                             value = licenseData.birthDate.ifEmpty { "Not Found" }
                         )
-                        HorizontalDivider(color = Color(0xFFE2E8F0))
-
-                        DataRow(
+                        CenteredGridRow(
                             label = "Expiration Date",
                             value = licenseData.expiryDate.ifEmpty { "Not Found" }
                         )
-                        HorizontalDivider(color = Color(0xFFE2E8F0))
-
-                        DataRow(
+                        CenteredGridRow(
                             label = "License Type",
                             value = licenseData.licenseType.ifEmpty { "Not Found" }
                         )
-
-                        if (!licenseData.isParsedSuccessfully) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(Color(0xFFFEF2F2), RoundedCornerShape(8.dp))
-                                    .border(1.dp, Color(0xFFFCA5A5), RoundedCornerShape(8.dp))
-                                    .padding(12.dp)
-                            ) {
-                                Text(
-                                    text = licenseData.parsingErrorMessage ?: "ไม่สามารถตรวจสอบข้อมูลได้",
-                                    color = Color(0xFFEF4444),
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
                     }
-                }
 
-                // Raw Tracks Card
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Row(
+                    if (!licenseData.isParsedSuccessfully) {
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { isRawDataExpanded = !isRawDataExpanded },
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                                .background(Color(0xFFFEF2F2), RoundedCornerShape(8.dp))
+                                .border(1.dp, Color(0xFFFCA5A5), RoundedCornerShape(8.dp))
+                                .padding(12.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Description,
-                                    contentDescription = null,
-                                    tint = Color(0xFF009688),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Text(
-                                    text = "ข้อความแทร็กแถบแม่เหล็กดิบ",
-                                    color = Color(0xFF0F172A),
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            Icon(
-                                imageVector = if (isRawDataExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = null,
-                                tint = Color(0xFF64748B)
+                            Text(
+                                text = licenseData.parsingErrorMessage ?: "ไม่สามารถตรวจสอบข้อมูลได้",
+                                color = Color(0xFFEF4444),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
                             )
                         }
+                    }
 
-                        AnimatedVisibility(
-                            visible = isRawDataExpanded,
-                            enter = fadeIn() + expandVertically(),
-                            exit = fadeOut() + shrinkVertically()
+                    // Raw Tracks Card
+                    Card(
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Column(
-                                modifier = Modifier.padding(top = 12.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { isRawDataExpanded = !isRawDataExpanded },
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                val rawText = buildString {
-                                    append("TRACK 1: ").append(licenseData.rawTrack1.ifEmpty { "[Empty]" }).append("\n\n")
-                                    append("TRACK 2: ").append(licenseData.rawTrack2.ifEmpty { "[Empty]" }).append("\n\n")
-                                    append("TRACK 3: ").append(licenseData.rawTrack3.ifEmpty { "[Empty]" })
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Description,
+                                        contentDescription = null,
+                                        tint = Color(0xFF009688),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Text(
+                                        text = "ข้อความแทร็กแถบแม่เหล็กดิบ",
+                                        color = Color(0xFF0F172A),
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
-                                Text(
-                                    text = rawText,
-                                    color = Color(0xFF334155),
-                                    fontSize = 12.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(180.dp)
-                                        .background(Color(0xFFF1F5F9), RoundedCornerShape(8.dp))
-                                        .verticalScroll(rememberScrollState())
-                                        .padding(12.dp)
+                                Icon(
+                                    imageVector = if (isRawDataExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                    contentDescription = null,
+                                    tint = Color(0xFF64748B),
+                                    modifier = Modifier.size(18.dp)
                                 )
+                            }
+
+                            AnimatedVisibility(
+                                visible = isRawDataExpanded,
+                                enter = fadeIn() + expandVertically(),
+                                exit = fadeOut() + shrinkVertically()
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(top = 8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    val rawText = buildString {
+                                        append("TRACK 1: ").append(licenseData.rawTrack1.ifEmpty { "[Empty]" }).append("\n\n")
+                                        append("TRACK 2: ").append(licenseData.rawTrack2.ifEmpty { "[Empty]" }).append("\n\n")
+                                        append("TRACK 3: ").append(licenseData.rawTrack3.ifEmpty { "[Empty]" })
+                                    }
+                                    Text(
+                                        text = rawText,
+                                        color = Color(0xFF334155),
+                                        fontSize = 11.sp,
+                                        fontFamily = FontFamily.Monospace,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(140.dp)
+                                            .background(Color(0xFFF1F5F9), RoundedCornerShape(8.dp))
+                                            .verticalScroll(rememberScrollState())
+                                            .padding(10.dp)
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            // Action Buttons
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedButton(
-                    onClick = onRescan,
-                    shape = RoundedCornerShape(100.dp),
-                    border = BorderStroke(1.5.dp, Color(0xFFEF4444)),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444)),
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp)
-                ) {
-                    Text(
-                        text = "สแกนใหม่",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
-                    )
-                }
-
+                // Premium Back button to go back to scanning screen
                 Button(
                     onClick = onBackClick,
                     shape = RoundedCornerShape(100.dp),
@@ -289,64 +234,54 @@ fun ResultScreen(
                         contentColor = Color.White
                     ),
                     modifier = Modifier
-                        .weight(1f)
+                        .fillMaxWidth()
                         .height(48.dp)
                 ) {
                     Text(
-                        text = "ยืนยัน",
+                        text = "กลับไปหน้าเริ่ม",
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp
                     )
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
 }
 
 @Composable
-private fun DataRow(
-    label: String,
-    value: String,
-    onCopy: (() -> Unit)? = null
-) {
-    Column(
+private fun CenteredGridRow(label: String, value: String) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = label,
-                color = Color(0xFF475569),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium
-            )
-            if (onCopy != null && value.isNotEmpty() && value != "Not Found") {
-                IconButton(
-                    onClick = onCopy,
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ContentCopy,
-                        contentDescription = "Copy details",
-                        tint = Color(0xFF94A3B8),
-                        modifier = Modifier.size(14.dp)
-                    )
-                }
-            }
-        }
+        // Label (Right-aligned column)
+        Text(
+            text = label,
+            color = Color(0xFF475569),
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.End,
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 16.dp)
+        )
+
+        // Value (Left-aligned column)
         Text(
             text = value,
             color = Color(0xFF0F172A),
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Monospace,
-            modifier = Modifier.fillMaxWidth()
+            textAlign = TextAlign.Start,
+            modifier = Modifier
+                .weight(1.2f)
+                .padding(start = 16.dp)
         )
     }
 }
@@ -359,6 +294,8 @@ fun ResultScreenPreview() {
             licenseData = ThaiDrivingLicense(
                 citizenId = "1234567890123",
                 licenseNumber = "12345678",
+                firstNameEn = "SATHEANPONG",
+                lastNameEn = "JEUNGUDOMPORN",
                 fullNameEn = "MR. SATHEANPONG JEUNGUDOMPORN",
                 birthDate = "1990-12-22",
                 expiryDate = "2026-12-22",

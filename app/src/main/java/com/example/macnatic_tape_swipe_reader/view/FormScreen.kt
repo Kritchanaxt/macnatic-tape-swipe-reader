@@ -34,7 +34,6 @@ fun FormScreen(
     onExpiryDateChange: (String) -> Unit,
     birthDate: String,
     onBirthDateChange: (String) -> Unit,
-    onSubmit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -137,26 +136,7 @@ fun FormScreen(
                     }
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
 
-                // Submit button for manual input
-                Button(
-                    onClick = onSubmit,
-                    shape = RoundedCornerShape(100.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF009688), // Teal primary button
-                        contentColor = Color.White
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                ) {
-                    Text(
-                        text = "ดูผลลัพธ์",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
-                    )
-                }
 
                 // Connection Metadata Card
                 TechnicalMetadataCard(connectionStatus = connectionStatus)
@@ -182,8 +162,7 @@ fun FormScreenPreview() {
             expiryDate = "2026-12-22",
             onExpiryDateChange = {},
             birthDate = "1990-12-22",
-            onBirthDateChange = {},
-            onSubmit = {}
+            onBirthDateChange = {}
         )
     }
 }

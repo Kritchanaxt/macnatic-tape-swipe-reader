@@ -65,12 +65,16 @@ class MainActivity : ComponentActivity() {
             }
         }
         usbReceiver = receiver
-        androidx.core.content.ContextCompat.registerReceiver(
-            this,
-            receiver,
-            filter,
-            androidx.core.content.ContextCompat.RECEIVER_EXPORTED
-        )
+        try {
+            androidx.core.content.ContextCompat.registerReceiver(
+                this,
+                receiver,
+                filter,
+                androidx.core.content.ContextCompat.RECEIVER_EXPORTED
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to register USB BroadcastReceiver safely", e)
+        }
 
         // Perform initial USB check
         checkUsbConnection()
@@ -123,6 +127,16 @@ class MainActivity : ComponentActivity() {
 
     private fun handleRawMsrInput(line: String) {
         Log.d(TAG, "Raw MSR Line Received: $line")
+
+        val isMSRLine = line.startsWith("%") || line.contains("%") ||
+                        line.startsWith(";") || line.contains(";") ||
+                        line.startsWith("+") || line.contains("+") ||
+                        (line.length >= 13 && line.all { it.isDigit() })
+
+        if (!isMSRLine) {
+            // Not MSR data (likely manual typing), ignore it to prevent accidental transition
+            return
+        }
         
         mainHandler.removeCallbacks(resetTracksRunnable)
 
@@ -180,7 +194,12 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun checkUsbConnection() {
-        isUsbConnected = isUsbMsrConnected(this)
+        try {
+            isUsbConnected = isUsbMsrConnected(this)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking USB connection status", e)
+            isUsbConnected = false
+        }
         updateConnectionStatus()
     }
 
@@ -199,38 +218,44 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun isUsbMsrConnected(context: Context): Boolean {
-        val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
-        val deviceList = usbManager.deviceList
-        Log.d(TAG, "Found ${deviceList.size} connected USB devices:")
-        for (device in deviceList.values) {
-            Log.d(
-                TAG,
-                "USB Device: Name=${device.deviceName}, VID=${device.vendorId} (0x${Integer.toHexString(device.vendorId)}), PID=${device.productId} (0x${Integer.toHexString(device.productId)}), Manufacturer=${device.manufacturerName}, Product=${device.productName}"
-            )
-            val name = ((device.manufacturerName ?: "") + " " + (device.productName ?: "")).lowercase()
-            if (name.contains("msr") || 
-                name.contains("magnetic") || 
-                name.contains("reader") || 
-                name.contains("keyboard") ||
-                name.contains("card")) {
-                return true
-            }
-            
-            // Check interface class for HID (Class 3 is Human Interface Device, which MSR keyboards are)
-            if (device.deviceClass == 3) {
-                return true
-            }
-            for (i in 0 until device.interfaceCount) {
-                if (device.getInterface(i).interfaceClass == 3) {
+        try {
+            val usbManager = context.getSystemService(Context.USB_SERVICE) as? UsbManager ?: return false
+            val deviceList = usbManager.deviceList ?: return false
+            Log.d(TAG, "Found ${deviceList.size} connected USB devices:")
+            for (device in deviceList.values) {
+                if (device == null) continue
+                Log.d(
+                    TAG,
+                    "USB Device: Name=${device.deviceName}, VID=${device.vendorId} (0x${Integer.toHexString(device.vendorId)}), PID=${device.productId} (0x${Integer.toHexString(device.productId)}), Manufacturer=${device.manufacturerName}, Product=${device.productName}"
+                )
+                val name = ((device.manufacturerName ?: "") + " " + (device.productName ?: "")).lowercase()
+                if (name.contains("msr") || 
+                    name.contains("magnetic") || 
+                    name.contains("reader") || 
+                    name.contains("keyboard") ||
+                    name.contains("card")) {
+                    return true
+                }
+                
+                // Check interface class for HID (Class 3 is Human Interface Device, which MSR keyboards are)
+                if (device.deviceClass == 3) {
+                    return true
+                }
+                for (i in 0 until device.interfaceCount) {
+                    val inter = device.getInterface(i)
+                    if (inter != null && inter.interfaceClass == 3) {
+                        return true
+                    }
+                }
+                
+                // Common MSR Reader VIDs (e.g. MSR90, MagTek, USBFever)
+                val vid = device.vendorId
+                if (vid == 0x0801 || vid == 0x0ACD || vid == 0x1130 || vid == 0x04B4 || vid == 0x03EB || vid == 0x4643 || vid == 0x0590 || vid == 0x0c2e) {
                     return true
                 }
             }
-            
-            // Common MSR Reader VIDs (e.g. MSR90, MagTek, USBFever)
-            val vid = device.vendorId
-            if (vid == 0x0801 || vid == 0x0ACD || vid == 0x1130 || vid == 0x04B4 || vid == 0x03EB || vid == 0x4643 || vid == 0x0590 || vid == 0x0c2e) {
-                return true
-            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in isUsbMsrConnected", e)
         }
         return false
     }

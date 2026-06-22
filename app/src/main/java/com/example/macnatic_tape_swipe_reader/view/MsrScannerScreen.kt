@@ -74,18 +74,6 @@ fun MsrScannerScreen(
                     onExpiryDateChange = { expiryDateInput = it },
                     birthDate = birthDateInput,
                     onBirthDateChange = { birthDateInput = it },
-                    onSubmit = {
-                        onUpdateLicenseData(
-                            ThaiDrivingLicense(
-                                citizenId = citizenIdInput,
-                                licenseNumber = licenseNumberInput,
-                                fullNameEn = driverNameInput,
-                                expiryDate = expiryDateInput,
-                                birthDate = birthDateInput,
-                                isParsedSuccessfully = true
-                            )
-                        )
-                    },
                     modifier = modifier
                 )
             }
