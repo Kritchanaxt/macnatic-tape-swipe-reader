@@ -4,10 +4,13 @@
 
     <!-- Permissions required for Sunmi payment terminals card communication -->
     <uses-permission android:name="com.sunmi.perm.CONTACTLESS_CARD" />
+    <uses-permission android:name="com.sunmi.perm.MSR" />
+    <uses-permission android:name="com.sunmi.perm.ICC" />
 
     <!-- Query packages on Android 11+ to bind to Sunmi Pay Service -->
     <queries>
         <package android:name="com.sunmi.pay.hardware_v3" />
+        <package android:name="com.sunmi.pay.hardware" />
     </queries>
 
     <application
